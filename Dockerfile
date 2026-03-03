@@ -90,7 +90,7 @@ ENV PATH=/opt/rocm/hcc/bin:/opt/rocm/hip/bin:/opt/rocm/bin:/opt/rocm/hcc/bin:$PA
 
 ENV AMDGPU_TARGETS="gfx1151"
 ENV LLAMA_HIP_UMA=1
-ENV ROCBLAS_USE_HIPBLASLT=1          # hipBLASLt für bessere Matrix-Performance
+ENV ROCBLAS_USE_HIPBLASLT=1
 
 ARG PARALLEL
 COPY CMakeLists.txt CMakePresets.json .
