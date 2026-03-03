@@ -87,6 +87,11 @@ RUN --mount=type=cache,target=/root/.ccache \
 
 FROM base AS rocm-7
 ENV PATH=/opt/rocm/hcc/bin:/opt/rocm/hip/bin:/opt/rocm/bin:/opt/rocm/hcc/bin:$PATH
+
+ENV AMDGPU_TARGETS="gfx1151"
+ENV LLAMA_HIP_UMA=1
+ENV ROCBLAS_USE_HIPBLASLT=1          # hipBLASLt für bessere Matrix-Performance
+
 ARG PARALLEL
 COPY CMakeLists.txt CMakePresets.json .
 COPY ml/backend/ggml/ggml ml/backend/ggml/ggml
@@ -94,7 +99,13 @@ RUN --mount=type=cache,target=/root/.ccache \
     cmake --preset 'ROCm 7' \
         && cmake --build --parallel ${PARALLEL} --preset 'ROCm 7' \
         && cmake --install build --component HIP --strip --parallel ${PARALLEL}
-RUN rm -f dist/lib/ollama/rocm/rocblas/library/*gfx90[06]*
+RUN rm -f dist/lib/ollama/rocm/rocblas/library/*gfx90[06]* \
+     && rm -f dist/lib/ollama/rocm/rocblas/library/*gfx803*  \
+     && rm -f dist/lib/ollama/rocm/rocblas/library/*gfx908*  \
+     && rm -f dist/lib/ollama/rocm/rocblas/library/*gfx90a*  \
+     && rm -f dist/lib/ollama/rocm/rocblas/library/*gfx1010* \
+     && rm -f dist/lib/ollama/rocm/rocblas/library/*gfx1030* \
+     && rm -f dist/lib/ollama/rocm/rocblas/library/*gfx1100*
 
 FROM --platform=linux/arm64 nvcr.io/nvidia/l4t-jetpack:${JETPACK5VERSION} AS jetpack-5
 ARG CMAKEVERSION
@@ -205,6 +216,11 @@ ENV LD_LIBRARY_PATH=/usr/local/nvidia/lib:/usr/local/nvidia/lib64
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV OLLAMA_HOST=0.0.0.0:11434
+
+ENV HSA_OVERRIDE_GFX_VERSION=11.5.1
+ENV ROCBLAS_USE_HIPBLASLT=1
+ENV ROCR_VISIBLE_DEVICES=0
+
 EXPOSE 11434
 ENTRYPOINT ["/bin/ollama"]
 CMD ["serve"]
